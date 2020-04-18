@@ -29,6 +29,25 @@ def top10(year: str = None):
     return resp
 
 
+def events(limit: int = 10, start: int = None, finish: int = None):
+    params = {}
+    params["limit"] = limit
+    if start is not None:
+        params["start"] = start
+    if finish is not None:
+        params["finish"] = finish
+    url = "https://ctftime.org/api/v1/events/"
+    resp = requests.get(
+        url,
+        params=params,
+        headers={
+            "Referer": "https://ctftime.org/api/",
+            "User-Agent": "Mozilla/5.0",  # the API does not accept the default UA
+        },
+    )
+    return resp
+
+
 def teams(limit: int = 10):
     url = "https://ctftime.org/api/v1/teams/"
     resp = requests.get(

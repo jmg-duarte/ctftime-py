@@ -57,6 +57,20 @@ def team(team_id: str = None):
     return resp
 
 
+def results(year: str = None):
+    url = "https://ctftime.org/api/v1/results/"
+    if year is not None:
+        url += year
+    url = _append_slash(url)
+    resp = requests.get(
+        url,
+        headers={
+            "Referer": "https://ctftime.org/api/",
+            "User-Agent": "Mozilla/5.0",  # the API does not accept the default UA
+        },
+    )
+    return resp
+
 print(top10("2014/").json())
 print(teams().json())
 print(team("112556").json())

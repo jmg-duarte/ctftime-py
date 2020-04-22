@@ -1,6 +1,10 @@
 import requests
 import json
+
 from pprint import pformat, pprint
+
+from dataclasses import dataclass
+from typing import List, Tuple
 
 URL = "https://ctftime.org/api"
 API_VERSION = "/v1"
@@ -13,36 +17,36 @@ def _append_slash(s: str):
     return s + "/"
 
 
-class ShortTeam(object):
-    def __init__(self, team_id, team_name, points):
-        super().__init__()
-        self.team_id = team_id
-        self.team_name = team_name
-        self.points = points
+@dataclass
+class TeamPoints(object):
+
+    team_id: str
+    team_name: str
+    points: float
 
     @staticmethod
     def decode(dct):
         if "team_id" in dct and "team_name" in dct and "points" in dct:
-            return ShortTeam(dct["team_id"], dct["team_name"], dct["points"])
+            return TeamPoints(dct["team_id"], dct["team_name"], dct["points"])
         return None
 
     def __str__(self):
         return f"team_id: {self.team_id}\nteam_name: {self.team_name}\npoints: {self.points}\n"
 
 
+@dataclass
 class Top10(object):
-    def __init__(self, year, top):
-        super().__init__()
-        self.year = year
-        self.top = top
+
+    year: int
+    top: List[TeamPoints]
 
     @staticmethod
     def decode(year):
         def _decode(dct):
-            team = ShortTeam.decode(dct)
+            team = TeamPoints.decode(dct)
             if team is None:
                 return Top10(year, dct[year])
-            return ShortTeam.decode(dct)
+            return TeamPoints.decode(dct)
 
         return _decode
 
@@ -63,12 +67,11 @@ def top10(year: str = "2020"):
             "User-Agent": "Mozilla/5.0",  # the API does not accept the default UA
         },
     )
-    print(resp.text)
     print(json.loads(resp.content, object_hook=Top10.decode(year)))
     return resp
 
 
-print(top10("2015"))
+# print(top10("2015"))
 
 
 def events(limit: int = 10, start: int = None, finish: int = None):
@@ -90,25 +93,12 @@ def events(limit: int = 10, start: int = None, finish: int = None):
     return resp
 
 
-def teams(limit: int = 10):
-    url = "https://ctftime.org/api/v1/teams/"
-    resp = requests.get(
-        url,
-        params={"limit": limit},
-        headers={
-            "Referer": "https://ctftime.org/api/",
-            "User-Agent": "Mozilla/5.0",  # the API does not accept the default UA
-        },
-    )
-    return resp
-
-
+@dataclass
 class Rating(object):
-    def __init__(self, organizer_points, rating_points, rating_place):
-        super().__init__()
-        self.organizer_points = organizer_points
-        self.rating_points = rating_points
-        self.rating_place = rating_place
+
+    organizer_points: float
+    rating_points: float
+    rating_place: int
 
     @staticmethod
     def decode(dct):
@@ -123,15 +113,15 @@ class Rating(object):
         return None
 
 
+@dataclass
 class Team(object):
-    def __init__(self, _id, name, aliases, country, academic, rating):
-        super().__init__()
-        self.id = _id
-        self.name = name
-        self.aliases = aliases
-        self.country = country
-        self.academic = academic
-        self.rating = rating
+
+    id: str
+    name: str
+    aliases: List[str]
+    country: str
+    academic: bool
+    rating: List[Tuple[int, Rating]]
 
     @staticmethod
     def decode(dct):
@@ -143,6 +133,10 @@ class Team(object):
             # hack to bypass the dumb use of year value as key
             for v in dct:
                 return (v, dct[v])
+        if "rating" not in dct:
+            return Team(
+                dct["id"], dct["name"], dct["aliases"], dct["country"], dct["academic"],
+            )
         return Team(
             dct["id"],
             dct["name"],
@@ -151,6 +145,24 @@ class Team(object):
             dct["academic"],
             dct["rating"],
         )
+
+
+def teams(limit: int = 10, offset: int = 0):
+    params = {"limit": limit, "offset": offset}
+    url = "https://ctftime.org/api/v1/teams/"
+    resp = requests.get(
+        url,
+        params=params,
+        headers={
+            "Referer": "https://ctftime.org/api/",
+            "User-Agent": "Mozilla/5.0",  # the API does not accept the default UA
+        },
+    )
+    # print(json.loads(resp.content, object_hook=Team.decode))
+    return resp
+
+
+# print(teams())
 
 
 def team(team_id: str):
@@ -165,12 +177,42 @@ def team(team_id: str):
             "User-Agent": "Mozilla/5.0",  # the API does not accept the default UA
         },
     )
-    print(json.loads(resp.content, object_hook=Team.decode))
+    print(resp.text)
+    # print(json.loads(resp.content, object_hook=Team.decode))
     return resp
 
 
-print(team("1005"))
-print(team("112556"))
+# print(team("1005"))
+# print(team("112556"))
+
+
+@dataclass
+class Score(object):
+
+    team_id: int
+    points: float
+    place: int
+
+    @staticmethod
+    def decode(dct):
+        if "team_id" in dct and "points" in dct and "place" in dct:
+            return Score(dct["team_id"], dct["points"], dct["place"])
+        return None
+
+
+class Results(object):
+
+    title: str
+    scores: List[Score]
+    time: int
+
+    @staticmethod
+    def decode(dct):
+        score = Score.decode(dct)
+        if score is not None:
+            return score
+        print(dct)
+        return Results(dct["title"], dct["scores"], dct["time"])
 
 
 def results(year: str = None):
@@ -185,7 +227,12 @@ def results(year: str = None):
             "User-Agent": "Mozilla/5.0",  # the API does not accept the default UA
         },
     )
+    print(resp.text)
+    # print(json.loads(resp.content, object_hook=Team.decode))
     return resp
+
+
+results("2020")
 
 
 def votes(year: str):

@@ -1,16 +1,21 @@
 import requests
 import json
 
-from pprint import pformat, pprint
-
 from dataclasses import dataclass
 from typing import List, Tuple
 
-from data import *
+from data.events import *
+from data.scores import *
+from data.team import *
 
 URL = "https://ctftime.org/api"
 API_VERSION = "/v1"
 API_URL = URL + API_VERSION
+
+DEFAULT_HEADER = {
+    "Referer": "https://ctftime.org/api/",
+    "User-Agent": "Mozilla/5.0",  # the API does not accept the default UA
+}
 
 
 def _append_slash(s: str):
@@ -25,17 +30,11 @@ def top10(year: str = "2020"):
         url += year
     url = _append_slash(url)
     print(url)
-    resp = requests.get(
-        url,
-        headers={
-            "Referer": "https://ctftime.org/api/",
-            "User-Agent": "Mozilla/5.0",  # the API does not accept the default UA
-        },
-    )
+    resp = requests.get(url, headers=DEFAULT_HEADER,)
     return Top10.from_dict(json.loads(resp.content))
 
 
-# print(top10("2015"))
+print(top10("2015"))
 
 
 def events(limit: int = 10, start: int = None, finish: int = None):
@@ -46,32 +45,18 @@ def events(limit: int = 10, start: int = None, finish: int = None):
     if finish is not None:
         params["finish"] = finish
     url = f"{API_URL}/events/"
-    resp = requests.get(
-        url,
-        params=params,
-        headers={
-            "Referer": "https://ctftime.org/api/",
-            "User-Agent": "Mozilla/5.0",  # the API does not accept the default UA
-        },
-    )
+    resp = requests.get(url, params=params, headers=DEFAULT_HEADER,)
     return list(map(Event.from_dict, json.loads(resp.content)))
 
 
 def teams(limit: int = 10, offset: int = 0):
     params = {"limit": limit, "offset": offset}
     url = f"{API_URL}/teams/"
-    resp = requests.get(
-        url,
-        params=params,
-        headers={
-            "Referer": "https://ctftime.org/api/",
-            "User-Agent": "Mozilla/5.0",  # the API does not accept the default UA
-        },
-    )
+    resp = requests.get(url, params=params, headers=DEFAULT_HEADER,)
     return TeamsInfo.from_dict(json.loads(resp.content))
 
 
-# print(teams())
+print(teams())
 
 
 def team(team_id: str):
@@ -79,18 +64,12 @@ def team(team_id: str):
     if team_id is not None:
         url += team_id
     url = _append_slash(url)
-    resp = requests.get(
-        url,
-        headers={
-            "Referer": "https://ctftime.org/api/",
-            "User-Agent": "Mozilla/5.0",  # the API does not accept the default UA
-        },
-    )
+    resp = requests.get(url, headers=DEFAULT_HEADER,)
     return Team.from_dict(json.loads(resp.content))
 
 
 # print(team("1005"))
-# print(team("112556"))
+print(team("112556"))
 
 
 def results(year: str = None) -> List[Results]:
@@ -98,18 +77,12 @@ def results(year: str = None) -> List[Results]:
     if year is not None:
         url += year
     url = _append_slash(url)
-    resp = requests.get(
-        url,
-        headers={
-            "Referer": "https://ctftime.org/api/",
-            "User-Agent": "Mozilla/5.0",  # the API does not accept the default UA
-        },
-    )
+    resp = requests.get(url, headers=DEFAULT_HEADER,)
     j = json.loads(resp.content)
     return list(map(lambda x: j[x], j))
 
 
-# print(results("2020"))
+print(results("2020"))
 
 
 def votes(year: str):
@@ -118,14 +91,8 @@ def votes(year: str):
         return  # this should be an exception
     url += year
     url = _append_slash(url)
-    resp = requests.get(
-        url,
-        headers={
-            "Referer": "https://ctftime.org/api/",
-            "User-Agent": "Mozilla/5.0",  # the API does not accept the default UA
-        },
-    )
+    resp = requests.get(url, headers=DEFAULT_HEADER,)
     return list(map(Vote.from_dict, json.loads(resp.content)))
 
 
-# print(votes("2020"))
+print(votes("2020"))

@@ -1,161 +1,7 @@
 from dataclasses import dataclass
-from typing import Any, List, TypeVar, Callable, Type, cast, Tuple, Dict
-from enum import Enum
+from typing import List, Dict
 from datetime import datetime
-import dateutil.parser
-
-
-@dataclass
-class TeamPoints:
-
-    team_id: str
-    team_name: str
-    points: float
-
-    @staticmethod
-    def from_dict(dct) -> "TeamPoints":
-        return TeamPoints(dct["team_id"], dct["team_name"], dct["points"])
-
-    def to_dict(self) -> dict:
-        result: dict = {}
-        result["team_id"] = self.team_id
-        result["team_name"] = self.team_name
-        result["points"] = self.points
-        return result
-
-
-@dataclass
-class Top10:
-
-    year: int
-    top: List[TeamPoints]
-
-    @staticmethod
-    def from_dict(dct) -> "Top10":
-        for year in dct:
-            # since theres only one year
-            return Top10(year, list(map(TeamPoints.from_dict, dct[year])))
-
-    def to_dict(self) -> dict:
-        result: dict = {}
-        result["year"] = year
-        result["top"] = top
-        return result
-
-
-@dataclass
-class Rating:
-
-    organizer_points: float
-    rating_points: float
-    rating_place: int
-
-    @staticmethod
-    def from_dict(dct) -> "Rating":
-        return Rating(
-            dct["organizer_points"], dct["rating_points"], dct["rating_place"]
-        )
-
-    def to_dict(self) -> dict:
-        result: dict = {}
-        result["organizer_points"] = self.organizer_points
-        result["rating_points"] = self.rating_points
-        result["rating_place"] = self.rating_place
-        return result
-
-
-@dataclass
-class Team:
-
-    id: str
-    name: str
-    aliases: List[str]
-    country: str
-    academic: bool
-    rating: Dict[int, Rating]
-
-    @staticmethod
-    def from_dict(obj: dict) -> "Team":
-        rating: dict = {}
-        for r in obj["rating"]:
-            # dumb year as key again
-            for year in r:
-                rating[year] = Rating.from_dict(r[year])
-        return Team(
-            obj["id"],
-            obj["name"],
-            obj["aliases"],
-            obj["country"],
-            obj["academic"],
-            rating,
-        )
-
-    def to_dict(self) -> dict:
-        result: dict = {}
-        result["id"] = self.id
-        result["name"] = self.name
-        result["aliases"] = self.aliases
-        result["country"] = self.country
-        result["academic"] = self.academic
-        result["rating"] = self.rating
-        return result
-
-
-@dataclass
-class TeamsInfo:
-    limit: int
-    offset: int
-    result: List[Team]
-
-    @staticmethod
-    def from_dict(obj: dict) -> "TeamsInfo":
-        return TeamsInfo(
-            obj["limit"], obj["offset"], list(map(Team.from_dict, obj["result"]))
-        )
-
-    def to_dict(self):
-        result: dict = {}
-        result["limit"] = self.limit
-        result["offset"] = self.offset
-        result["result"] = self.result
-        return result
-
-
-@dataclass
-class Score:
-
-    team_id: int
-    points: float
-    place: int
-
-    @staticmethod
-    def from_dict(dct):
-        return Score(dct["team_id"], dct["points"], dct["place"])
-
-    def to_dict(self) -> dict:
-        result: dict = {}
-        return result
-
-
-@dataclass
-class Results:
-
-    title: str
-    scores: List[Score]
-    time: int
-
-    @staticmethod
-    def from_dict(obj: dict) -> "Results":
-        return Results(
-            obj["title"], list(map(Score.from_dict, obj["scores"])), obj["time"]
-        )
-
-    def to_dict(self) -> dict:
-        results: dict = {}
-        results["title"] = self.title
-        results["scores"] = self.scores
-        results["time"] = self.time
-        return results
+from dateutil import parser
 
 
 @dataclass
@@ -164,7 +10,7 @@ class Organizer:
     name: str
 
     @staticmethod
-    def from_dict(obj: Any) -> "Organizer":
+    def from_dict(obj: dict) -> "Organizer":
         assert isinstance(obj, dict)
         id = obj["id"]
         name = obj["name"]
@@ -183,7 +29,7 @@ class Duration:
     days: int = 0
 
     @staticmethod
-    def from_dict(obj: Any) -> "Duration":
+    def from_dict(obj: dict) -> "Duration":
         assert isinstance(obj, dict)
         hours = obj["hours"]
         days = obj["days"]
@@ -222,7 +68,7 @@ class Event:
     ctf_id: int
 
     @staticmethod
-    def from_dict(obj: Any) -> "Event":
+    def from_dict(obj: dict) -> "Event":
         assert isinstance(obj, dict)
         organizers = list(map(Organizer.from_dict, obj["organizers"]))
         onsite = obj["onsite"]
@@ -234,7 +80,7 @@ class Event:
         is_votable_now = obj["is_votable_now"]
         restrictions = obj["restrictions"]
         format = obj["format"]
-        start = dateutil.parser.parse(obj["start"])
+        start = parser.parse(obj["start"])
         participants = obj["participants"]
         ctftime_url = obj["ctftime_url"]
         location = obj["location"]

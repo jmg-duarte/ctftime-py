@@ -23,26 +23,6 @@ class Top10:
         return result
 
 
-@dataclass
-class Rating:
-
-    organizer_points: float
-    rating_points: float
-    rating_place: int
-
-    @staticmethod
-    def from_dict(dct) -> "Rating":
-        return Rating(
-            dct["organizer_points"], dct["rating_points"], dct["rating_place"]
-        )
-
-    def to_dict(self) -> dict:
-        result: dict = {}
-        result["organizer_points"] = self.organizer_points
-        result["rating_points"] = self.rating_points
-        result["rating_place"] = self.rating_place
-        return result
-
 
 @dataclass
 class Score:

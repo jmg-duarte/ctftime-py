@@ -1,7 +1,26 @@
 from dataclasses import dataclass
 from typing import List, Dict
 
-from .scores import Rating
+
+@dataclass
+class Rating:
+
+    organizer_points: float
+    rating_points: float
+    rating_place: int
+
+    @staticmethod
+    def from_dict(dct) -> "Rating":
+        return Rating(
+            dct["organizer_points"], dct["rating_points"], dct["rating_place"]
+        )
+
+    def to_dict(self) -> dict:
+        result: dict = {}
+        result["organizer_points"] = self.organizer_points
+        result["rating_points"] = self.rating_points
+        result["rating_place"] = self.rating_place
+        return result
 
 
 @dataclass
@@ -36,10 +55,11 @@ class Team:
     @staticmethod
     def from_dict(obj: dict) -> "Team":
         rating: dict = {}
-        for r in obj["rating"]:
-            # dumb year as key again
-            for year in r:
-                rating[year] = Rating.from_dict(r[year])
+        if "rating" in obj:
+            for r in obj["rating"]:
+                # dumb year as key again
+                for year in r:
+                    rating[year] = Rating.from_dict(r[year])
         return Team(
             obj["id"],
             obj["name"],
